@@ -38,6 +38,7 @@ def _parse_date_block(lines: list[str]) -> dict[str, list[int]]:
 def parse_message(text: str, message_id: int) -> Optional[Promotion]:
     """Parse a Telegram promotion message into a Promotion object."""
     try:
+        text = text.replace("**", "")  # remove Markdown bold markers
         lines = text.splitlines()
 
         destination = None
