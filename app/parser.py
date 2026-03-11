@@ -4,7 +4,69 @@ from datetime import datetime
 from app.models import Promotion
 
 
-# Patterns for each field
+# ── Normalização de valores ────────────────────────────────────────────────────
+
+CABIN_CLASS_MAP = {
+    "economica":          "Econômica",
+    "econômica":          "Econômica",
+    "economy":            "Econômica",
+    "premium economy":    "Premium Econômica",
+    "premium econômica":  "Premium Econômica",
+    "premium economica":  "Premium Econômica",
+    "executiva":          "Executiva",
+    "executive":          "Executiva",
+    "business":           "Executiva",
+    "primeira":           "Primeira Classe",
+    "primeira classe":    "Primeira Classe",
+    "first":              "Primeira Classe",
+    "first class":        "Primeira Classe",
+}
+
+AIRLINE_MAP = {
+    "latam":   "LATAM",
+    "gol":     "GOL",
+    "azul":    "Azul",
+    "american": "American Airlines",
+    "american airlines": "American Airlines",
+    "tap":     "TAP",
+    "iberia":  "Iberia",
+    "emirates": "Emirates",
+    "delta":   "Delta",
+    "united":  "United",
+    "lufthansa": "Lufthansa",
+    "air france": "Air France",
+    "klm":     "KLM",
+}
+
+PROGRAM_MAP = {
+    "latam pass":     "Latam Pass",
+    "latampass":      "Latam Pass",
+    "smiles":         "Smiles",
+    "tudoazul":       "TudoAzul",
+    "tudo azul":      "TudoAzul",
+    "aadvantage":     "AAdvantage",
+    "american airlines aadvantage": "AAdvantage",
+    "miles&more":     "Miles&More",
+    "miles and more": "Miles&More",
+    "flying blue":    "Flying Blue",
+    "tap miles&go":   "TAP Miles&Go",
+    "tap miles go":   "TAP Miles&Go",
+    "skypass":        "SkyPass",
+    "mileageplus":    "MileagePlus",
+    "mileage plus":   "MileagePlus",
+    "skymiles":       "SkyMiles",
+    "executive club": "Executive Club",
+    "iberia plus":    "Iberia Plus",
+}
+
+
+def _normalize(value: str, mapping: dict) -> str:
+    """Retorna o valor padronizado ou o original com strip/title se não encontrar."""
+    key = value.strip().lower()
+    return mapping.get(key, value.strip())
+
+
+# ── Patterns for each field ────────────────────────────────────────────────────
 PATTERNS = {
     "destination":       re.compile(r"DESTINO:\s*(.+)", re.IGNORECASE),
     "origin":            re.compile(r"Origem:\s*(.+?)\s*\((\w{3})\)", re.IGNORECASE),
@@ -132,14 +194,14 @@ def parse_message(text: str, message_id: int) -> Optional[Promotion]:
 
         return Promotion(
             message_id=message_id,
-            destination=destination,
-            origin_city=origin_city,
-            origin_code=origin_code,
-            destination_city=destination_city,
-            destination_code=destination_code,
-            airline=airline,
-            program=program,
-            cabin_class=cabin_class,
+            destination=destination.strip().upper(),
+            origin_city=origin_city.strip().title(),
+            origin_code=origin_code.upper(),
+            destination_city=destination_city.strip().title(),
+            destination_code=destination_code.upper(),
+            airline=_normalize(airline, AIRLINE_MAP),
+            program=_normalize(program, PROGRAM_MAP),
+            cabin_class=_normalize(cabin_class, CABIN_CLASS_MAP),
             miles_per_segment=miles_per_segment,
             outbound_dates=outbound_dates,
             return_dates=return_dates,
