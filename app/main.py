@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app.models import Promotion
 from app.storage import Storage
-from app.telegram_client import fetch_history, listen_new_messages, stop_client
+from app.telegram_client import fetch_history, listen_new_messages, stop_client, fetch_raw_messages
 
 
 storage = Storage()
@@ -111,3 +111,13 @@ async def stats():
 @app.get("/health")
 async def health():
     return {"status": "ok", "promotions_stored": storage.count()}
+
+
+@app.get("/debug/messages", summary="Ver texto bruto das últimas mensagens (debug)")
+async def debug_messages(limit: int = Query(5, ge=1, le=20)):
+    """Retorna o texto cru das últimas mensagens para depuração do parser."""
+    try:
+        messages = await fetch_raw_messages(limit=limit)
+        return {"count": len(messages), "messages": messages}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

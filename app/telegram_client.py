@@ -73,6 +73,19 @@ async def listen_new_messages(storage: Storage) -> None:
     await client.run_until_disconnected()
 
 
+async def fetch_raw_messages(limit: int = 5) -> list[dict]:
+    """Retorna texto bruto das últimas mensagens para debug do parser."""
+    client = get_client()
+    await client.start()
+    entity = await _resolve_group(client)
+    result = []
+    async for message in client.iter_messages(entity, limit=limit):
+        if not isinstance(message, Message):
+            continue
+        result.append({"id": message.id, "text": message.text or ""})
+    return result
+
+
 async def stop_client() -> None:
     global _client
     if _client and _client.is_connected():
