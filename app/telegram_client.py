@@ -28,13 +28,23 @@ def get_client() -> TelegramClient:
     return _client
 
 
+async def _resolve_group(client: TelegramClient):
+    """Resolve the group entity, fetching dialogs first if needed."""
+    try:
+        return await client.get_entity(int(GROUP) if GROUP.lstrip("-").isdigit() else GROUP)
+    except Exception:
+        await client.get_dialogs()
+        return await client.get_entity(int(GROUP) if GROUP.lstrip("-").isdigit() else GROUP)
+
+
 async def fetch_history(limit: int = 200) -> list[Promotion]:
     """Fetch the last `limit` messages from the group and parse them."""
     client = get_client()
     await client.start()
 
+    entity = await _resolve_group(client)
     promotions: list[Promotion] = []
-    async for message in client.iter_messages(GROUP, limit=limit):
+    async for message in client.iter_messages(entity, limit=limit):
         if not isinstance(message, Message) or not message.text:
             continue
         promo = parse_message(message.text, message.id)
@@ -49,7 +59,7 @@ async def listen_new_messages(storage: Storage) -> None:
     client = get_client()
     await client.start()
 
-    entity = await client.get_entity(GROUP)
+    entity = await _resolve_group(client)
 
     @client.on(events.NewMessage(chats=entity))
     async def handler(event: events.NewMessage.Event) -> None:
